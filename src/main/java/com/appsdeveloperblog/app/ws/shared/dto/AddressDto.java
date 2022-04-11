@@ -1,5 +1,8 @@
 package com.appsdeveloperblog.app.ws.shared.dto;
 
+import lombok.Data;
+
+@Data
 public class AddressDto {
     public long id;
     private String city;
