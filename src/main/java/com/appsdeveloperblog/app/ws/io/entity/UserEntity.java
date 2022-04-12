@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.List;
 
 import static javax.persistence.GenerationType.IDENTITY;
 
@@ -41,4 +42,8 @@ public class UserEntity implements Serializable {
 
     @Column(nullable = false)
     private Boolean emailVerificationStatus = false;
+
+    @OneToMany(mappedBy = "userDetails", cascade = CascadeType.ALL)
+    private List<AddressEntity> addresses;
+
 }
