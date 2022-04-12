@@ -19,6 +19,12 @@ public class AppExceptionsHandler {
         return new ResponseEntity<>(errorMessage, new HttpHeaders(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @ExceptionHandler(value = {AddressServiceException.class})
+    public ResponseEntity<Object> handleAddressServiceException(AddressServiceException ex, WebRequest request){
+        ErrorMessage errorMessage = new ErrorMessage(new Date(), ex.getMessage());
+        return new ResponseEntity<>(errorMessage, new HttpHeaders(), HttpStatus.NO_CONTENT);
+    }
+
     @ExceptionHandler(value = {Exception.class})
     public ResponseEntity<Object> handleOtherExceptions(Exception ex, WebRequest request){
         ErrorMessage errorMessage = new ErrorMessage(new Date(), ex.getMessage());
