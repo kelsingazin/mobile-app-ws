@@ -5,9 +5,11 @@ import com.appsdeveloperblog.app.ws.io.entity.UserEntity;
 import com.appsdeveloperblog.app.ws.io.repository.UserRepository;
 import com.appsdeveloperblog.app.ws.service.UserService;
 import com.appsdeveloperblog.app.ws.shared.Utils;
+import com.appsdeveloperblog.app.ws.shared.dto.AddressDto;
 import com.appsdeveloperblog.app.ws.shared.dto.UserDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -37,8 +39,15 @@ public class UserServiceImpl implements UserService {
         if (Objects.nonNull(userRepository.findByEmail(user.getEmail())))
             throw new RuntimeException("Email is already taken!");
 
-        UserEntity userEntity = new UserEntity();
-        BeanUtils.copyProperties(user, userEntity);
+        for (int i = 0; i < user.getAddresses().size(); i++) {
+            AddressDto addressDto = user.getAddresses().get(i);
+            addressDto.setUserDetails(user);
+            addressDto.setAddressId(utils.generateAddressId(30));
+            user.getAddresses().set(i,addressDto);
+        }
+
+        ModelMapper modelMapper = new ModelMapper();
+        UserEntity userEntity = modelMapper.map(user, UserEntity.class);
 
         String publicUserId = utils.generateUserId(30);
         userEntity.setEncryptedPassword(bCryptPasswordEncoder.encode(user.getPassword()));
@@ -46,9 +55,7 @@ public class UserServiceImpl implements UserService {
 
         UserEntity storedUserDetails = userRepository.save(userEntity);
 
-        UserDto returnValue = new UserDto();
-        BeanUtils.copyProperties(storedUserDetails, returnValue);
-
+        UserDto returnValue = modelMapper.map(storedUserDetails, UserDto.class);
         return returnValue;
     }
 
