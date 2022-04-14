@@ -26,13 +26,12 @@ public class UserController {
 
     private final UserService userService;
     private final AddressService addressesService;
+    private final ModelMapper modelMapper;
 
     @GetMapping(value = "/{id}", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
     public UserRest getUser(@PathVariable String id) {
-        UserRest returnValue = new UserRest();
         UserDto userDto = userService.getUserByUserId(id);
-        BeanUtils.copyProperties(userDto, returnValue);
-        return returnValue;
+        return modelMapper.map(userDto, UserRest.class);
     }
 
     @PostMapping(
@@ -44,7 +43,6 @@ public class UserController {
         if (userDetailsRequestModel.getFirstName().isEmpty())
             throw new UserServiceException(ErrorMessages.MISSING_REQUIRED_FIELD.getErrorMessage());
 
-        ModelMapper modelMapper = new ModelMapper();
         UserDto userDto = modelMapper.map(userDetailsRequestModel, UserDto.class);
 
         UserDto createdUser = userService.createUser(userDto);
@@ -59,13 +57,10 @@ public class UserController {
                                @PathVariable String userId) {
         UserRest returnValue = new UserRest();
 
-        UserDto userDto = new UserDto();
-        BeanUtils.copyProperties(userDetailsRequestModel, userDto);
+        UserDto userDto = modelMapper.map(userDetailsRequestModel, UserDto.class);
 
         UserDto updatedUser = userService.updateUser(userId, userDto);
-        BeanUtils.copyProperties(updatedUser, returnValue);
-
-        return returnValue;
+        return modelMapper.map(updatedUser, UserRest.class);
     }
 
     @DeleteMapping(path = "/{userId}")
@@ -87,9 +82,7 @@ public class UserController {
         List<UserDto> userDtoList = userService.getUsers(page, limit);
 
         for (UserDto userDto : userDtoList) {
-            UserRest userRest = new UserRest();
-            BeanUtils.copyProperties(userDto, userRest);
-            returnValue.add(userRest);
+            returnValue.add(modelMapper.map(userDto, UserRest.class));
         }
 
         return returnValue;
@@ -111,7 +104,6 @@ public class UserController {
 
     @GetMapping(value = "/{userId}/addresses/{addressId}", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
     public AddressesRest getUserAddress(@PathVariable String addressId) {
-        ModelMapper modelMapper = new ModelMapper();
         AddressDto addressesDto = addressesService.getAddress(addressId);
         return modelMapper.map(addressesDto, AddressesRest.class);
     }
