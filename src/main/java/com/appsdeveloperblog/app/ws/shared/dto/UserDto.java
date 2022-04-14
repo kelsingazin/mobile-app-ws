@@ -1,5 +1,6 @@
 package com.appsdeveloperblog.app.ws.shared.dto;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -18,5 +19,6 @@ public class UserDto implements Serializable{
     private String encryptedPassword;
     private String emailVerificationToken;
     private Boolean emailVerificationStatus = false;
+    @JsonManagedReference
     private List<AddressDto> addresses;
 }

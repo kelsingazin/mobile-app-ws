@@ -10,7 +10,6 @@ import com.appsdeveloperblog.app.ws.shared.dto.UserDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -32,10 +31,11 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final Utils utils;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final ModelMapper modelMapper;
 
     @Override
     public UserDto createUser(UserDto user) {
-        log.info("User created");
+        log.info("Creating a new  user");
         if (Objects.nonNull(userRepository.findByEmail(user.getEmail())))
             throw new RuntimeException("Email is already taken!");
 
@@ -43,10 +43,8 @@ public class UserServiceImpl implements UserService {
             AddressDto addressDto = user.getAddresses().get(i);
             addressDto.setUserDetails(user);
             addressDto.setAddressId(utils.generateAddressId(30));
-            user.getAddresses().set(i,addressDto);
+            user.getAddresses().set(i, addressDto);
         }
-
-        ModelMapper modelMapper = new ModelMapper();
         UserEntity userEntity = modelMapper.map(user, UserEntity.class);
 
         String publicUserId = utils.generateUserId(30);
@@ -56,6 +54,7 @@ public class UserServiceImpl implements UserService {
         UserEntity storedUserDetails = userRepository.save(userEntity);
 
         UserDto returnValue = modelMapper.map(storedUserDetails, UserDto.class);
+        log.info("User has been created");
         return returnValue;
     }
 
@@ -68,53 +67,49 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUser(String email) {
-        log.info("Specific user retrieved");
+        log.info("Receiving an user by email");
         UserEntity userEntity = getUserEntityByEmail(email);
-
-        UserDto returnValue = new UserDto();
-        BeanUtils.copyProperties(userEntity, returnValue);
-        return returnValue;
+        return modelMapper.map(userEntity, UserDto.class);
     }
 
     @Override
     public UserDto getUserByUserId(String userId) {
-        UserDto returnValue = new UserDto();
+        log.info("Receiving an user by userId");
         UserEntity userEntity = getUserEntityByUserId(userId);
-        BeanUtils.copyProperties(userEntity, returnValue);
-        return returnValue;
+        return modelMapper.map(userEntity, UserDto.class);
     }
 
     @Override
     public UserDto updateUser(String userId, UserDto user) {
-        log.info("UpdateUser method was called!");
-        UserDto returnValue = new UserDto();
+        log.info("Updating an user details");
         UserEntity userEntity = getUserEntityByUserId(userId);
 
         userEntity.setFirstName(user.getFirstName());
         userEntity.setLastName(user.getLastName());
 
         UserEntity updatedUserDetails = userRepository.save(userEntity);
-        BeanUtils.copyProperties(updatedUserDetails, returnValue);
-
-        return returnValue;
+        log.info("The user has been updated");
+        return modelMapper.map(updatedUserDetails, UserDto.class);
     }
 
     @Override
     public void deleteUser(String userId) {
-        log.info("DeleteUser method was called");
+        log.info("Deleting an user");
         UserEntity userEntity = getUserEntityByUserId(userId);
 
         userRepository.delete(userEntity);
-        log.info("User with userId {} was deleted", userId);
+        log.info("The user with userId {} was deleted", userId);
     }
 
     private UserEntity getUserEntityByUserId(String userId) throws UserServiceException {
+        log.info("Receiving an user entity by userId");
         UserEntity userEntity = userRepository.findByUserId(userId);
         if (Objects.isNull(userEntity)) throw new UserServiceException("User with userId: " + userId + " is not found");
         return userEntity;
     }
 
     private UserEntity getUserEntityByEmail(String email) throws UserServiceException {
+        log.info("Receiving an user entity by email");
         UserEntity userEntity = userRepository.findByEmail(email);
         if (Objects.isNull(userEntity)) throw new UserServiceException("User with email: " + email + " is not found");
         return userEntity;
@@ -122,9 +117,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserDto> getUsers(int page, int limit) {
+        log.info("Receiving a list of all users");
         List<UserDto> returnValue = new ArrayList<>();
 
-        if(page>0) page--;
+        if (page > 0) page--;
 
         Pageable pageableRequest = PageRequest.of(page, limit);
 
@@ -132,9 +128,7 @@ public class UserServiceImpl implements UserService {
         List<UserEntity> users = usersPage.getContent();
 
         for (UserEntity userEntity : users) {
-            UserDto userDto = new UserDto();
-            BeanUtils.copyProperties(userEntity, userDto);
-            returnValue.add(userDto);
+            returnValue.add(modelMapper.map(userEntity, UserDto.class));
         }
 
         return returnValue;
